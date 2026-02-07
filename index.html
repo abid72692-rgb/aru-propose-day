@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pakhi 💛</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Orbitron', sans-serif; }
+  body, html { width:100%; height:100%; overflow:hidden; touch-action: manipulation; }
+  body { background: url('background.jpg') no-repeat center center fixed; background-size: cover; }
+  #overlay { position: fixed; top:0; left:0; width:100%; height:100%; 
+    background: rgba(0,0,0,0.5); display:flex; justify-content:center; 
+    align-items:center; flex-direction:column; color:white; text-align:center; padding:20px; overflow:hidden;
+  }
+  h1,h2{ font-size: calc(1.5em + 1vw); margin-bottom:15px; }
+  p{ font-size: calc(1em + 0.5vw); margin-bottom:20px; }
+  button{ padding: 15px 30px; margin:10px; font-size: calc(16px + 0.5vw); border:none; border-radius:10px;
+    cursor:pointer; background: #ff6b81; color:white; transition:0.3s; }
+  button:hover{ background: #ff4757; }
+  .hidden{ display:none; }
+
+  /* Tulips floating images */
+  .tulip { position:absolute; width:60px; animation: floatTulip 6s ease-in-out infinite; }
+  #tulip1{ top:10px; left:10px; animation-delay:0s; }
+  #tulip2{ top:10px; right:10px; animation-delay:2s; }
+  #tulip3{ bottom:10px; left:10px; animation-delay:4s; }
+  @keyframes floatTulip {
+    0%{transform: translateY(0) rotate(0deg);}
+    50%{transform: translateY(-20px) rotate(10deg);}
+    100%{transform: translateY(0) rotate(0deg);}
+  }
+
+  /* Hearts falling */
+  .heart { position:absolute; font-size:24px; color:#ff6b81; pointer-events:none; }
+
+  /* Tic Tac Toe */
+  #ticTacToe{ display:flex; flex-wrap:wrap; width:300px; height:300px; margin:20px auto; }
+  .cell{ flex:1 0 33%; border:2px solid white; display:flex; justify-content:center; align-items:center; font-size:50px; cursor:pointer; }
+
+  /* Puzzle */
+  #puzzleContainer{ width:318px; display:grid; grid-template-columns: repeat(3, 1fr); grid-gap:2px; margin:20px auto; }
+  .tile{ width:100%; aspect-ratio:1/1; cursor: grab; background-size: 318px 318px; background-repeat:no-repeat; }
+
+  /* Final page */
+  #finalPage{ font-size:28px; line-height:1.6; position:relative; }
+
+  /* Tic Tac Toe message */
+  #ticMessage{ margin-top:15px; font-size:18px; color:#ffddaa; }
+</style>
+</head>
+<body>
+
+<audio id="bgMusic" src="music.mp3" loop></audio>
+
+<div id="overlay">
+
+  <!-- Tulips -->
+  <img src="tulip.png" class="tulip" id="tulip1">
+  <img src="tulip.png" class="tulip" id="tulip2">
+  <img src="tulip.png" class="tulip" id="tulip3">
+
+  <!-- Page 1 -->
+  <div id="page1">
+    <h1>Hey Pakhi…</h1>
+    <p>Can we play some small games? Just like we used to 🌸</p>
+    <button onclick="nextPage(2)">Let's play 🎮</button>
+  </div>
+
+  <!-- Page 2: Tic Tac Toe -->
+  <div id="page2" class="hidden">
+    <h2>Tic Tac Toe</h2>
+    <p>You go first 😉</p>
+    <div id="ticTacToe"></div>
+    <p id="ticMessage" class="hidden"></p>
+    <button id="ticNext" class="hidden" onclick="nextPage(3)">Next</button>
+  </div>
+
+  <!-- Page 3: Puzzle -->
+  <div id="page3" class="hidden">
+    <h2>Complete the Puzzle 🧩</h2>
+    <p>Drag the pieces to complete it</p>
+    <div id="puzzleContainer"></div>
+    <button id="puzzleNext" class="hidden" onclick="nextPage(4)">Continue</button>
+  </div>
+
+  <!-- Page 4: Post Puzzle Message -->
+  <div id="page4" class="hidden">
+    <h2>Pakhi…</h2>
+    <p>Just like this, all broken things can be fixed if we try ❤️</p>
+    <button onclick="nextPage(5)">Continue</button>
+  </div>
+
+  <!-- Page 5: Final Proposal -->
+  <div id="page5" class="hidden">
+    <div id="finalPage">
+      Can your Abid have one more chance?<br><br>
+      I promise, I’ll make it right this time.<br>
+      Still loving you.<br>
+      Still yours.
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentPage = 1;
+let gameOver = false;
+
+/* Start music on first touch */
+document.body.addEventListener('click', () => {
+  const music = document.getElementById('bgMusic');
+  if(music.paused) music.play();
+}, {once:true});
+
+/* Page Navigation */
+function nextPage(pageNum){
+  for(let i=1;i<=5;i++) document.getElementById('page'+i).classList.add('hidden');
+  document.getElementById('page'+pageNum).classList.remove('hidden');
+  currentPage = pageNum;
+
+  if(pageNum === 2) initTicTacToe();
+  if(pageNum === 3) initPuzzle();
+  if(pageNum === 5) createHearts();
+}
+
+/* Tic Tac Toe */
+function initTicTacToe(){
+  gameOver = false;
+  moves=0;
+  board = Array(9).fill("");
+  const cells = document.getElementById('ticTacToe');
+  cells.innerHTML = "";
+  document.getElementById('ticMessage').classList.add('hidden');
+  document.getElementById('ticMessage').innerText="";
+  document.getElementById('ticNext').classList.add('hidden');
+
+  for(let i=0;i<9;i++){
+    const div=document.createElement('div');
+    div.classList.add('cell');
+    div.addEventListener('click',()=>playerMove(i,div));
+    cells.appendChild(div);
+  }
+}
+
+let board=[], moves=0;
+function playerMove(i, div){
+  if(gameOver || div.innerText!=="") return;
+  div.innerText = "❌";
+  board[i] = "X";
+  moves++;
+  if(checkWin("X")) { 
+    gameOver=true; 
+    showTicMessage(); 
+    document.getElementById('ticNext').classList.remove('hidden'); 
+    return; 
+  }
+  if(moves<5) setTimeout(aiMove,500);
+}
+
+function aiMove(){
+  if(gameOver) return;
+  const emptyIndices = board.map((v,i)=>v===""?i:null).filter(v=>v!==null);
+  let aiChoice = emptyIndices[Math.floor(Math.random()*emptyIndices.length)];
+  board[aiChoice]="⭕";
+  document.querySelectorAll('#ticTacToe .cell')[aiChoice].innerText="⭕";
+  moves++;
+  if(checkWin("⭕")) { 
+    gameOver=true; 
+    showTicMessage(); 
+    document.getElementById('ticNext').classList.remove('hidden'); 
+    return; 
+  }
+  if(moves>=5 && !gameOver){ 
+    gameOver=true; 
+    showTicMessage(); 
+    document.getElementById('ticNext').classList.remove('hidden'); 
+  }
+}
+
+function checkWin(player){
+  const combos=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  return combos.some(c=>c.every(i=>board[i]===player));
+}
+
+// Show Tic Tac Toe final message
+function showTicMessage(){
+  const msg = document.getElementById('ticMessage');
+  msg.innerText = "You always win, somehow......always......";
+  msg.classList.remove('hidden');
+}
+
+/* Hearts Animation */
+function createHearts(){
+  const finalDiv=document.getElementById('finalPage');
+  for(let i=0;i<30;i++){
+    const heart=document.createElement('div');
+    heart.classList.add('heart');
+    heart.innerText="❤️";
+    heart.style.left=Math.random()*100+"vw";
+    heart.style.top=-50+"px";
+    heart.style.fontSize=20+Math.random()*20+"px";
+    finalDiv.appendChild(heart);
+    animateHeart(heart);
+  }
+}
+function animateHeart(heart){
+  let top=-50;
+  let left=parseFloat(heart.style.left);
+  const speed=1+Math.random()*2;
+  function fall(){
+    top+=speed;
+    left+=Math.sin(top/50)*2;
+    heart.style.top=top+"px";
+    heart.style.left=left+"px";
+    if(top<window.innerHeight) requestAnimationFrame(fall);
+  }
+  fall();
+}
+
+/* Puzzle */
+function initPuzzle(){
+  const container=document.getElementById('puzzleContainer');
+  container.innerHTML="";
+  const size=318; 
+  const rows=3, cols=3;
+  let positions=[];
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      positions.push({x:c, y:r});
+    }
+  }
+  let shuffled=[...positions].sort(()=>Math.random()-0.5);
+  shuffled.forEach((pos,i)=>{
+    const tile=document.createElement('div');
+    tile.classList.add('tile');
+    tile.style.backgroundImage="url('puzzle.jpg')";
+    tile.style.backgroundPosition=`-${shuffled[i].x*size/3}px -${shuffled[i].y*size/3}px`;
+    tile.dataset.correctX=positions[i].x;
+    tile.dataset.correctY=positions[i].y;
+    tile.dataset.currentX=shuffled[i].x;
+    tile.dataset.currentY=shuffled[i].y;
+    tile.setAttribute('draggable','true');
+    tile.addEventListener('dragstart', dragStart);
+    tile.addEventListener('dragover', dragOver);
+    tile.addEventListener('drop', drop);
+    container.appendChild(tile);
+  });
+}
+
+let dragged;
+function dragStart(e){ dragged=e.target; }
+function dragOver(e){ e.preventDefault(); }
+function drop(e){
+  e.preventDefault();
+  const target=e.target;
+  let tempX=dragged.dataset.currentX;
+  let tempY=dragged.dataset.currentY;
+  dragged.dataset.currentX=target.dataset.currentX;
+  dragged.dataset.currentY=target.dataset.currentY;
+  target.dataset.currentX=tempX;
+  target.dataset.currentY=tempY;
+
+  dragged.style.backgroundPosition=`-${dragged.dataset.currentX*106}px -${dragged.dataset.currentY*106}px`;
+  target.style.backgroundPosition=`-${target.dataset.currentX*106}px -${target.dataset.currentY*106}px`;
+
+  checkPuzzleSolved();
+}
+
+function checkPuzzleSolved(){
+  const tiles=document.querySelectorAll('.tile');
+  const solved=Array.from(tiles).every(tile=>tile.dataset.currentX==tile.dataset.correctX && tile.dataset.currentY==tile.dataset.correctY);
+  if(solved) document.getElementById('puzzleNext').classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
